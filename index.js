@@ -112,8 +112,8 @@ controller.hears(['Whats Plated'], 'direct_mention, ambient, mention', function 
       {
         default: true,
         callback: function (response, convo) {
-          convo.repeat();
-          convo.next();
+          convo.say('Not an option, try again!')
+          convo.stop()
         }
       }
     ]);
