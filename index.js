@@ -14,7 +14,6 @@ jiffy.startRTM(function (err, bot, payload) {
 
 controller.setupWebserver(process.env.port || 5000, function (err, webserver) {
   controller.createWebhookEndpoints(controller.webserver);
-
 });
 
 controller.hears(['Who is our President'], 'direct_mention, ambient, mention', function (bot, message) {
