@@ -1,0 +1,16 @@
+{
+  "name": "geoff",
+  "version": "1.0.0",
+  "description": "cool bot for stuy hacks",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "botkit": "^0.6.7",
+    "express": "^4.16.2"
+  }
+}
