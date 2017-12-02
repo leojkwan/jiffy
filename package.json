@@ -9,6 +9,7 @@
     "botkit": "^0.6.7"
   },
   "scripts": {
+    "start": "npm run jiffy",
     "jiffy": "node index.js port=5000"
   }
 }
