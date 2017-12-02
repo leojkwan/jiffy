@@ -1,9 +1,9 @@
 var Botkit = require('botkit');
 
 var controller = Botkit.slackbot();
-
+var PORT = +process.env.PORT;
 var jiffy = controller.spawn({
-  token: "xoxb-280741095043-wCK8rfoW8oYZ4IE1EXcEXMjb"
+  token: "xoxb-280741095043-wy9pYbrZLzm1c3iJhtqnPSVM"
 })
 
 jiffy.startRTM(function (err, bot, payload) {
@@ -12,7 +12,7 @@ jiffy.startRTM(function (err, bot, payload) {
   }
 });
 
-controller.setupWebserver(process.env.port || 5000, function (err, webserver) {
+controller.setupWebserver(PORT || 5000, function (err, webserver) {
   controller.createWebhookEndpoints(controller.webserver);
 });
 

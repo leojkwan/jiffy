@@ -10,6 +10,6 @@
   },
   "scripts": {
     "start": "npm run jiffy",
-    "jiffy": "node index.js port=5000"
+    "jiffy": "node index.js"
   }
 }
