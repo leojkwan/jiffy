@@ -1,198 +1,134 @@
-'use strict';
-
 var Botkit = require('botkit');
 
-var express = require('express')
-var app = express();
+var controller = Botkit.slackbot();
 
-var config = {
-  json_file_store: './db_slackbutton_slash_command/'
-};
+var jiffy = controller.spawn({
+  token: "xoxb-280741095043-wCK8rfoW8oYZ4IE1EXcEXMjb"
+})
 
-var controller = Botkit.slackbot(config).configureSlackApp(
-  {
-    clientId: '278380915494.280195413520',
-    clientSecret: '4f60624f9dbb0f0290cd0baac4d2fa81',
-    scopes: ['commands'],
+jiffy.startRTM(function (err, bot, payload) {
+  if (err) {
+    throw new Error('Could not connect to Slack');
   }
-);
+});
 
-controller.setupWebserver(5000, function (err, webserver) {
+controller.setupWebserver(process.env.port || 5000, function (err, webserver) {
   controller.createWebhookEndpoints(controller.webserver);
 
-  controller.createOauthEndpoints(controller.webserver, function (err, req, res) {
-    if (err) {
-      res.status(500).send('ERROR: ' + err);
-    } else {
-      res.send('Success!');
-    }
-  });
 });
 
-controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function (bot, message) {
+controller.hears(['Who is our President'], 'direct_mention, ambient, mention', function (bot, message) {
+  bot.startConversation(message, function (err, convo) {
+    convo.say('Donald J. Trump')
+  })
+})
 
-  bot.api.reactions.add({
-    timestamp: message.ts,
-    channel: message.channel,
-    name: 'robot_face',
-  }, function (err, res) {
-    if (err) {
-      bot.botkit.log('Failed to add emoji reaction :(', err);
-    }
-  });
+var schedule = [
+  {
+    time: new Date(2017, 12, 2, 17, 30, 0, 0),
+    name: "5:30PM-DINNER!"
+  }, {
+    time: new Date(2017, 12, 2, 18, 0, 0, 0),
+    name: "6:00PM-Hacking Ends"
+  }, {
+    time: new Date(2017, 12, 2, 18, 30, 0, 0),
+    name: "6:30PM-Expo"
+  }, {
+    time: new Date(2017, 12, 2, 19, 30, 0, 0),
+    name: "7:30PM-Top 10 Presentations"
+  }, {
+    time: new Date(2017, 12, 2, 20, 30, 0, 0),
+    name: "8:30PM-Winners Announces// Closing"
+  }, {
+    time: new Date(2099, 12, 2, 20, 30, 0, 0),
+    name: "Event Ended!"
+  }
+]
+function getnextEvent() {
+  var currenttime = new Date();
+  return schedule.find(function (event) {
+    return event.time > currenttime;
+  }
+  )
 
-
-  controller.storage.users.get(message.user, function (err, user) {
-    if (user && user.name) {
-      bot.reply(message, 'Hello ' + user.name + '!!');
-    } else {
-      bot.reply(message, 'Hello.');
-    }
-  });
-});
-
-controller.hears(['call me (.*)', 'my name is (.*)'], 'direct_message,direct_mention,mention', function (bot, message) {
-  var name = message.match[1];
-  controller.storage.users.get(message.user, function (err, user) {
-    if (!user) {
-      user = {
-        id: message.user,
-      };
-    }
-    user.name = name;
-    controller.storage.users.save(user, function (err, id) {
-      bot.reply(message, 'Got it. I will call you ' + user.name + ' from now on.');
-    });
-  });
-});
+}
 
 controller.hears([
-  'what is my name',
-  "what's my name",
-  'who am i',
-], 'direct_message,direct_mention,mention', function (bot, message) {
-
-  controller.storage.users.get(message.user, function (err, user) {
-    if (user && user.name) {
-      bot.reply(message, 'Your name is ' + user.name);
-    } else {
-      bot.startConversation(message, function (err, convo) {
-        if (!err) {
-          convo.say('I do not know your name yet!');
-          convo.ask('What should I call you?', function (response, convo) {
-            convo.ask('You want me to call you `' + response.text + '`?', [
-              {
-                pattern: 'yes',
-                callback: function (response, convo) {
-                  // since no further messages are queued after this,
-                  // the conversation will end naturally with status == 'completed'
-                  convo.next();
-                }
-              },
-              {
-                pattern: 'no',
-                callback: function (response, convo) {
-                  // stop the conversation. this will cause it to end with status == 'stopped'
-                  convo.stop();
-                }
-              },
-              {
-                default: true,
-                callback: function (response, convo) {
-                  convo.repeat();
-                  convo.next();
-                }
-              }
-            ]);
-
-            convo.next();
-
-          }, { 'key': 'nickname' }); // store the results in a field called nickname
-
-          convo.on('end', function (convo) {
-            if (convo.status == 'completed') {
-              bot.reply(message, 'OK! I will update my dossier...');
-
-              controller.storage.users.get(message.user, function (err, user) {
-                if (!user) {
-                  user = {
-                    id: message.user,
-                  };
-                }
-                user.name = convo.extractResponse('nickname');
-                controller.storage.users.save(user, function (err, id) {
-                  bot.reply(message, 'Got it. I will call you ' + user.name + ' from now on.');
-                });
-              });
-
-
-
-            } else {
-              // this happens if the conversation ended prematurely for some reason
-              bot.reply(message, 'OK, nevermind!');
-            }
-          });
-        }
-      });
-    }
-  });
-});
-
-
-controller.hears(['shutdown'], 'direct_message,direct_mention,mention', function (bot, message) {
-
+  "Whats next",
+  "what's next",
+  "What's next",
+], 'direct_mention, ambient, mention', function (bot, message) {
   bot.startConversation(message, function (err, convo) {
+    convo.say(getnextEvent().name)
+  })
+})
 
-    convo.ask('Are you sure you want me to shutdown?', [
+
+
+controller.hears(['Who do you think won', 'Who won'], 'direct_mention, ambient, mention', function (bot, message) {
+  bot.startConversation(message, function (err, convo) {
+    convo.say('JIFFY!!!')
+  })
+})
+
+
+controller.hears(['Whats Plated'], 'direct_mention, ambient, mention', function (bot, message) {
+  bot.startConversation(message, function (err, convo) {
+    convo.say('Funny you asked, Plated is one of the best food subscription services on the market.\n You can get Chef made meals for a cheap affordable price. https://www.plated.com')
+    // convo.ask('What food do you like?\n -Burgers? (Type 1) \n-Steak ? (Type 2) \n-Vegetarian? (Type 3)?', function (response, convo) {
+
+    // if (response.text == 1) {
+
+    // } else if (response.text == 2) {
+
+    // } else if (response.text == 3) {
+
+    // }
+    // convo.say('Funny you asked, Plated is one of the best food subscription services on the market.\n You can get Chef made meals for a cheap affordable price. https://www.plated.com (This is not an endoresment or a sponsorship)')
+
+    convo.ask('What food do you like?\n -Steak? (type "1") \n-Pizza ? (type "2") \n-Seafood? (type "3")?', [
       {
-        pattern: bot.utterances.yes,
+        pattern: '1',
         callback: function (response, convo) {
-          convo.say('Bye!');
+          // since no further messages are queued after this,
+          // the conversation will end naturally with status == 'completed'
+          convo.say('Nice! Check this recipe out! https://www.plated.com/menus/2017-11-26/recipes/steak-with-brussels-sprouts-and-garlic-parmesan-fries')
           convo.next();
-          setTimeout(function () {
-            process.exit();
-          }, 3000);
         }
       },
       {
-        pattern: bot.utterances.no,
+        pattern: '2',
+        callback: function (response, convo) {
+          convo.say('I LOVE PIZZA TOO~. https://www.plated.com/menus/2017-11-26/recipes/white-pizza-with-crispy-brussels-sprouts-and-balsamic-glaze-8')
+          convo.next();
+        }
+      },
+      {
+        pattern: '3',
+        callback: function (response, convo) {
+          convo.say('Salmon anyone?~. https://www.plated.com/menus/2017-11-26/recipes/salmon-and-creamy-dill-sauce-with-sauteed-kale-and-roasted-fingerling-potatoes')
+          convo.next();
+        }
+      },
+      {
         default: true,
         callback: function (response, convo) {
-          convo.say('*Phew!*');
+          convo.repeat();
           convo.next();
         }
       }
     ]);
-  });
-});
+
+    convo.next();
 
 
-controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'],
-  'direct_message,direct_mention,mention', function (bot, message) {
-
-    var hostname = os.hostname();
-    var uptime = formatUptime(process.uptime());
-
-    bot.reply(message,
-      ':robot_face: I am a bot named <@' + bot.identity.name +
-      '>. I have been running for ' + uptime + ' on ' + hostname + '.');
-
-  });
-
-function formatUptime(uptime) {
-  var unit = 'second';
-  if (uptime > 60) {
-    uptime = uptime / 60;
-    unit = 'minute';
-  }
-  if (uptime > 60) {
-    uptime = uptime / 60;
-    unit = 'hour';
-  }
-  if (uptime != 1) {
-    unit = unit + 's';
-  }
-
-  uptime = uptime + ' ' + unit;
-  return uptime;
-}
+    convo.on('end', function (convo) {
+      if (convo.status == 'completed') {
+        bot.reply(message, "To see what`s next in the StuyHacks schedule, dm me and ask `what's next`");
+      } else {
+        // this happens if the conversation ended prematurely for some reason
+        bot.reply(message, 'OK, nevermind!');
+      }
+    });
+  })
+})
